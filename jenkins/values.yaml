@@ -19,7 +19,7 @@ controller:
   persistence:
     enabled: true
     storageClass: "local-path"   # <- important
-    size: 20Gi                   # adjust as needed  
+    size: 1Gi                   # adjust as needed  
 
   # Run controller on a specific node (optional but common)
   nodeSelector:
