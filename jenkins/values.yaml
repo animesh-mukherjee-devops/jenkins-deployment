@@ -18,8 +18,8 @@ controller:
   # Persist Jenkins home
   persistence:
     enabled: true
-    storageClass: ""         # set to your StorageClass name if not default
-    size: 50Gi
+    storageClass: "local-path"   # <- important
+    size: 20Gi                   # adjust as needed  
 
   # Run controller on a specific node (optional but common)
   nodeSelector:
