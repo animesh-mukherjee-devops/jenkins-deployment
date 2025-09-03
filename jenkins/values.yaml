@@ -1,12 +1,11 @@
 controller:
   image: jenkins/jenkins:lts-jdk17
-  tag: lts
   installPlugins:
     - kubernetes
     - workflow-aggregator
     - configuration-as-code
-    - credentials-binding
     - git
+    - credentials-binding
   resources:
     requests:
       cpu: "500m"
@@ -15,16 +14,15 @@ controller:
       cpu: "2"
       memory: "4Gi"
 
-  # Persist Jenkins home
+  # Persist Jenkins data using local-path
   persistence:
     enabled: true
-    storageClass: "local-path"   # <- important
-    size: 1Gi                   # adjust as needed  
+    storageClass: "local-path"
+    size: 20Gi
 
-  # Run controller on a specific node (optional but common)
+  # Stick controller pod to controller node
   nodeSelector:
     jenkins: controller
-  tolerations: []
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -34,22 +32,15 @@ controller:
                 operator: In
                 values: ["controller"]
 
-  # Expose the UI
-  serviceType: ClusterIP
-  ingress:
-    enabled: false          # set to false if you prefer LoadBalancer/NodePort
-    hostName: jenkins.example.com   # <-- change this
-    annotations:
-      kubernetes.io/ingress.class: nginx
-      cert-manager.io/cluster-issuer: letsencrypt
-    tls:
-      - secretName: jenkins-tls
-        hosts:
-          - jenkins.example.com
+  # Expose without domain → NodePort
+  serviceType: NodePort
+  nodePort: 32080
 
-  # Secure defaults
+  # Bootstrap admin user
   adminUser: admin
-  adminPassword: ""         # Helm will auto-generate if empty
+  adminPassword: ""
+
+  # Auto-config Kubernetes cloud for agents
   JCasC:
     enabled: true
     defaultConfig: true
@@ -76,14 +67,10 @@ controller:
                       spec:
                         nodeSelector:
                           jenkins: agent
-                        tolerations: []
+                        restartPolicy: Never
                         containers:
                           - name: jnlp
                             image: jenkins/inbound-agent:latest-jdk17
-                            # Pass through CA certs if your cluster uses custom CAs
-                            env:
-                              - name: JAVA_OPTS
-                                value: "-Xmx512m"
                             resources:
                               requests:
                                 cpu: "200m"
@@ -91,17 +78,9 @@ controller:
                               limits:
                                 cpu: "2"
                                 memory: "2Gi"
-                        restartPolicy: Never
 
 agent:
-  enabled: true   # Creates the agent service (tcp 50000) for inbound agents
+  enabled: true   # service for inbound agents (tcp 50000)
 
 rbac:
   create: true
-
-serviceAccount:
-  create: true
-  name: "" # chart will auto-name and bind
-
-controller:
-  additionalExistingSecrets: []
