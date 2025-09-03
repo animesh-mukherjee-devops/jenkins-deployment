@@ -1,11 +1,17 @@
 controller:
-  image: jenkins/jenkins:lts-jdk17
+  image:
+    registry: docker.io
+    repository: jenkins/jenkins
+    tag: lts-jdk17
+    pullPolicy: IfNotPresent
+
   installPlugins:
     - kubernetes
     - workflow-aggregator
     - configuration-as-code
     - git
     - credentials-binding
+
   resources:
     requests:
       cpu: "500m"
@@ -14,13 +20,11 @@ controller:
       cpu: "2"
       memory: "4Gi"
 
-  # Persist Jenkins data using local-path
   persistence:
     enabled: true
     storageClass: "local-path"
     size: 20Gi
 
-  # Stick controller pod to controller node
   nodeSelector:
     jenkins: controller
   affinity:
@@ -32,15 +36,12 @@ controller:
                 operator: In
                 values: ["controller"]
 
-  # Expose without domain → NodePort
   serviceType: NodePort
   nodePort: 32080
 
-  # Bootstrap admin user
   adminUser: admin
   adminPassword: ""
 
-  # Auto-config Kubernetes cloud for agents
   JCasC:
     enabled: true
     defaultConfig: true
@@ -61,9 +62,6 @@ controller:
                     yaml: |
                       apiVersion: v1
                       kind: Pod
-                      metadata:
-                        labels:
-                          jenkins: agent
                       spec:
                         nodeSelector:
                           jenkins: agent
@@ -80,7 +78,7 @@ controller:
                                 memory: "2Gi"
 
 agent:
-  enabled: true   # service for inbound agents (tcp 50000)
+  enabled: true
 
 rbac:
   create: true
