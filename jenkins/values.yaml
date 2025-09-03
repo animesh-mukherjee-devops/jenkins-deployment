@@ -39,8 +39,9 @@ controller:
   serviceType: NodePort
   nodePort: 32080
 
-  adminUser: admin
-  adminPassword: ""
+  admin:
+    username: admin
+    password: ""   # if empty, Helm will auto-generate one
 
   JCasC:
     enabled: true
