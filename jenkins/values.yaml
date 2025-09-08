@@ -5,12 +5,16 @@ controller:
     tag: lts-jdk17
     pullPolicy: IfNotPresent
 
-  installPlugins:
-    - kubernetes
-    - workflow-aggregator
-    - configuration-as-code
-    - git
-    - credentials-binding
+  admin:
+    username: admin
+    password: ""   # if empty, Helm auto-generates
+
+  persistence:
+    enabled: true
+    storageClass: ""   # empty = use AKS default (managed-csi)
+    size: 20Gi
+
+  serviceType: LoadBalancer   # expose Jenkins with Azure LB
 
   resources:
     requests:
@@ -19,29 +23,6 @@ controller:
     limits:
       cpu: "2"
       memory: "4Gi"
-
-  persistence:
-    enabled: true
-    storageClass: "local-path"
-    size: 20Gi
-
-  nodeSelector:
-    jenkins: controller
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: jenkins
-                operator: In
-                values: ["controller"]
-
-  serviceType: NodePort
-  nodePort: 32080
-
-  admin:
-    username: admin
-    password: ""   # if empty, Helm will auto-generate one
 
   JCasC:
     enabled: true
@@ -64,19 +45,13 @@ controller:
                       apiVersion: v1
                       kind: Pod
                       spec:
-                        nodeSelector:
-                          jenkins: agent
                         restartPolicy: Never
                         containers:
                           - name: jnlp
                             image: jenkins/inbound-agent:latest-jdk17
                             resources:
-                              requests:
-                                cpu: "200m"
-                                memory: "512Mi"
-                              limits:
-                                cpu: "2"
-                                memory: "2Gi"
+                              requests: { cpu: "200m", memory: "512Mi" }
+                              limits:   { cpu: "2",    memory: "2Gi" }
 
 agent:
   enabled: true
