@@ -14,7 +14,12 @@ controller:
     storageClass: ""   # empty = use AKS default (managed-csi)
     size: 20Gi
 
-  serviceType: LoadBalancer   # expose Jenkins with Azure LB
+ 
+  
+  service:
+    type: LoadBalancer
+    port: 8080
+    targetPort: 8080
 
   resources:
     requests:
@@ -23,6 +28,22 @@ controller:
     limits:
       cpu: "2"
       memory: "4Gi"
+  
+  startupProbe:
+    httpGet:
+      path: "/login"
+      port: http
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    failureThreshold: 30  # (30 x 10s = 5 minutes max wait)
+
+  readinessProbe:
+    httpGet:
+      path: "/login"
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 10
 
   JCasC:
     enabled: true
@@ -53,6 +74,7 @@ controller:
                               requests: { cpu: "200m", memory: "512Mi" }
                               limits:   { cpu: "2",    memory: "2Gi" }
 
+  
 agent:
   enabled: true
 
